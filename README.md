@@ -6,18 +6,23 @@
 
 # 手順
 1. yamlディレクトリにopenapi.yamlを入れる（ファイル名変更可、コマンド叩く時に変えるのも忘れずに）
-2. adoc出力→asciidocker起動
+2. adoc出力
 ```
 docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli generate -i /local/yaml/bbs.yaml -g asciidoc -o /local/adoc
+```
+3. asciidocker-jpコンテナ起動
+```
 docker run -it -v ./adoc:/documents/ nazuma/docker-asciidoctor-jp
 ```
-3. コンテナ内で下記を実行、htmlとpdfがadocディレクトリに入る
+4. asciidocker-jpコンテナ内で下記を実行、htmlとpdfがadocディレクトリに入る
 ```
 adoc index.adoc
+```
+```
 adoc-pdf index.adoc
 ```
 
 # 参考
-https://qiita.com/amuyikam/items/e8a45daae59c68be0fc8#openapi-generator
-https://hub.docker.com/r/openapitools/openapi-generator-cli
+https://qiita.com/amuyikam/items/e8a45daae59c68be0fc8#openapi-generator  
+https://hub.docker.com/r/openapitools/openapi-generator-cli  
 https://hub.docker.com/r/nazuma/docker-asciidoctor-jp
