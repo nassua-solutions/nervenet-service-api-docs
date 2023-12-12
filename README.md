@@ -8,7 +8,7 @@
 1. yamlディレクトリにopenapi.yamlを入れる（ファイル名変更可、コマンド叩く時に変えるのも忘れずに）
 2. adoc出力
 ```
-docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli generate -i /local/yaml/bbs.yaml -g asciidoc -o /local/adoc
+docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli generate -i /local/yaml/openapi.yaml -g asciidoc -o /local/adoc
 ```
 3. asciidocker-jpコンテナ起動
 ```
