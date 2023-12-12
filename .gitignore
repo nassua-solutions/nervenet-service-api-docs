@@ -3,3 +3,4 @@
 *.pdf
 /yaml/*.yaml
 /yaml/*.yml
+/.vscode
