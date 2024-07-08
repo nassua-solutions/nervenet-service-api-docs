@@ -8,17 +8,26 @@
     function getSpecUrl() {
       const params = new URLSearchParams(window.location.search);
       const specFile = params.get('spec');
-      return specFile ? `yaml/${specFile}.yml` : null;
+      if (specFile) {
+        const yamlPath = `yaml/${specFile}.yaml`;
+        const ymlPath = `yaml/${specFile}.yml`;
+        // .yamlファイルが存在するか確認
+        return fetch(yamlPath, { method: 'HEAD' })
+          .then(response => response.ok ? yamlPath : ymlPath)
+          .catch(() => ymlPath);
+      }
+      return null;
     }
 
     // specファイル名を設定してRedocをレンダリング
     window.onload = () => {
-      const specUrl = getSpecUrl();
-      if (specUrl) {
-        Redoc.init(specUrl, {}, document.getElementById('redoc-container'));
-      } else {
-        document.getElementById('redoc-container').innerHTML = 'No spec file specified.';
-      }
+      getSpecUrl().then(specUrl => {
+        if (specUrl) {
+          Redoc.init(specUrl, {}, document.getElementById('redoc-container'));
+        } else {
+          document.getElementById('redoc-container').innerHTML = 'No spec file specified.';
+        }
+      });
     };
   </script>
 </head>
