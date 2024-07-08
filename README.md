@@ -19,7 +19,7 @@ Github Pagesによって外部公開するためのリポジトリです。
 
 ## GitHub Pagesでの公開リンク
 
-- [自治体情報掲示板](https://<your-username>.github.io/nervenet-service-api-docs/pages/index.html?spec=openapi-bbs_3.0)
+- [自治体情報掲示板](https://nassua-solutions.github.io/nervenet-service-api-docs/pages/index.html?spec=openapi-bbs_3.0)
 
 ## pdf出力
  - openapi.yamlからpdfを出力する手順です。
