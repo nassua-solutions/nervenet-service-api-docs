@@ -1,6 +1,1 @@
-*.adoc
-*.html
-*.pdf
-/yaml/*.yaml
-/yaml/*.yml
 /.vscode

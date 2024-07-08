@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>API Documentation</title>
+  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+  <script>
+    // URLパラメータからspecファイル名を取得
+    function getSpecUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const specFile = params.get('spec');
+      return specFile ? `yaml/${specFile}.yml` : null;
+    }
+
+    // specファイル名を設定してRedocをレンダリング
+    window.onload = () => {
+      const specUrl = getSpecUrl();
+      if (specUrl) {
+        Redoc.init(specUrl, {}, document.getElementById('redoc-container'));
+      } else {
+        document.getElementById('redoc-container').innerHTML = 'No spec file specified.';
+      }
+    };
+  </script>
+</head>
+<body>
+  <div id="redoc-container"></div>
+</body>
+</html>

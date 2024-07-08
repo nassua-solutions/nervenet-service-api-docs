@@ -1,2 +1,5 @@
 /.openapi-generator/
 /.openapi-generator-ignore
+*.adoc
+*.html
+*.pdf

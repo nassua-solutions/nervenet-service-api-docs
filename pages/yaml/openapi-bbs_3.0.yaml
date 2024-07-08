@@ -1,0 +1,492 @@
+openapi: 3.0.0
+x-stoplight:
+  id: ajy165tuix76y
+info:
+  contact:
+    url: 'https://nassua.co.jp'
+    name: Nassua Solutions
+    email: iwata@nassua.co.jp
+  title: municipality-bbs
+  version: '3.0'
+  description: 自治体情報掲示板のCRUD、及び掲示板システム自体の設定変更を行うWEB APIです。
+servers:
+  - url: 'http://localhost:18081/bbs/api'
+    description: 基地局URI/bbs/api
+components:
+  schemas:
+    board:
+      title: board
+      type: object
+      description: 掲示板の定義
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+          description: Material Colorで定義された色名、小文字ケバブケース
+          example: light-blue
+        postable:
+          type: boolean
+          description: UIから投稿可能、trueでなければ投稿ボタンがUIに出ない
+        hide:
+          type: boolean
+          description: trueの場合、サイドメニューに表示されず、UI操作で投稿一覧に遷移できない。トップページにも出ない
+      required:
+        - id
+        - name
+    entry:
+      title: entry
+      type: object
+      description: |-
+        掲示板における1投稿の定義で、
+        property以外はユーザーが編集可能。
+        board_idはクライアントで指定、ユーザーは手書き変更不可。
+      properties:
+        id_record:
+          type: string
+          example: 47F3F00B10453FE173AA3C5ACB8D5221
+          description: entryテーブルのid_record
+        board_id:
+          type: string
+          example: sample-board-id-1
+          description: 掲示板の定義はsetting.jsonにて行う
+        name:
+          type: string
+          minLength: 1
+          maxLength: 32
+          example: 伊藤仁久
+          description: 投稿者名 UIから手書き、マルチバイト文字可
+        content:
+          type: string
+          minLength: 1
+          maxLength: 512
+          example: POST EX
+          description: 投稿本文
+        timelimit:
+          type: integer
+          description: 投稿がDB共有される時間（1時間単位 最大2週間）
+          minimum: 1
+          maximum: 336
+          example: 168
+          writeOnly: true
+        nodeid:
+          type: string
+          description: 書き込みが行われた基地局ID
+          readOnly: true
+        time_update:
+          type: string
+          description: DB同期の共通項目
+          readOnly: true
+        time_discard:
+          type: string
+          description: DB同期の共通項目
+          readOnly: true
+        attached_files:
+          type: array
+          items:
+            $ref: '#/components/schemas/attached_file'
+          writeOnly: true
+      required:
+        - name
+        - content
+    entry_search_options:
+      type: object
+      title: entry_search
+      description: |-
+        掲示板の投稿一覧を取得する際の検索オプション。
+        NodeIDや位置情報での検索も実装予定あり。
+      properties:
+        board_id:
+          type: string
+        date_from:
+          type: integer
+          description: UNIXタイムスタンプ（秒）
+        date_to:
+          type: integer
+          description: UNIXタイムスタンプ（秒）
+        page:
+          type: integer
+          minimum: 1
+          maximum: 4096
+        per_page:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: 1ページ内のentry数(max100)
+      required:
+        - board_id
+      writeOnly: true
+    settings:
+      title: settings
+      type: object
+      x-examples:
+        example-1:
+          entry_maxcount: 5000
+      description: |-
+        掲示板そのものの設定。
+        現時点でentry_maxcountのみ
+      properties:
+        board_id:
+          type: string
+          minLength: 4
+          maxLength: 16
+          example: board-1
+          description: 掲示板名 setting.jsonのboards->idを指定
+        maxcount:
+          type: integer
+          minimum: 5000
+          maximum: 10000
+          description: 投稿の最大保持件数
+      required:
+        - maxcount
+    ap:
+      title: ap
+      type: object
+      description: Wi-Fi Access Point 情報
+      properties:
+        ssid:
+          type: string
+        type:
+          type: string
+          description: WEP/WPA
+        key:
+          type: string
+          description: 暗号化キー
+      required:
+        - ssid
+        - type
+        - key
+    attached_file:
+      title: attached_file
+      type: object
+      description: 添付ファイル情報
+      properties:
+        id_record:
+          type: string
+          description: 添付ファイルテーブルのレコードID
+          example: 01903d9bb2060222000a
+          readOnly: true
+        time_update:
+          type: string
+          description: DB同期の共通項目
+          example: '1719020532234'
+          readOnly: true
+        time_discard:
+          type: string
+          description: DB同期の共通項目
+          example: '1719625332230'
+          readOnly: true
+        entry_id_record:
+          type: string
+          description: entryテーブルにある、紐づいた投稿のレコードID
+          example: 01903d9bb1fe0222000a
+        entry_record_id:
+          type: string
+          description: (legacy)entryテーブルのレコードID
+          example: 01903d9bb1fe0222000a
+        thumbnail_base64:
+          type: string
+          example: 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA'
+          maxLength: 50000
+          description: サムネイル画像データのbase64、そのままimgタグにsetして使えるようヘッダー付き
+        is_headline:
+          type: boolean
+          description: ファイルのサムネイル画像を投稿の左側に表示する
+          example: true
+        download_uri:
+          type: string
+          description: 元ファイルをダウンロードするためのURL
+          example: 'http://abc-tsg.nervenet.biz/file-broker/file/storage/path/name.webp'
+        download_size:
+          type: string
+          description: 元ファイルをダウンロードするにあたってのファイルサイズ、単位はバイト
+          example: '103162'
+        alias:
+          type: string
+          description: 添付ファイル表示名、拡張子含
+          maxLength: 64
+          example: テストデータ1.webp
+    entry_search_attached_file:
+      title: entry_search_attached_file
+      type: object
+      description: 検索レコードID
+      properties:
+        entry_record_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/search_id_record'
+          example:
+            - 019040c050c10222000a
+            - 019040b5288b022200fb
+        include_headline:
+          type: boolean
+          description: ヘッドライン画像を含むデータを取得するか否か
+          example: true
+    search_id_record:
+      title: search_id_record
+      type: string
+      description: レコードID
+paths:
+  /board:
+    get:
+      summary: 掲示板一覧取得
+      tags:
+        - board
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  boards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/board'
+              examples:
+                Example 1:
+                  value:
+                    boards:
+                      - id: inhabitant
+                        name: 地域情報
+                        description: 地域住民の方向けの掲示板
+                        color: blue
+                        postable: true
+                      - id: city-office
+                        name: 市役所からのお知らせ
+                        description: 一般の方は書き込みできません
+                        color: green
+                      - id: d-logistics
+                        name: 災害時情報共有
+                        hide: true
+                        postable: true
+      operationId: get-board
+      description: |-
+        サイトに遷移したときに最初にクライアントから実行される。
+        返却される内容はsetting.jsonの内容そのまま。
+  /entry:
+    post:
+      operationId: post-entry
+      summary: メッセージ投稿
+      description: |-
+        掲示板にメッセージを投稿します。
+        ※編集と削除はV1時点では未定義です
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/entry'
+            examples:
+              example-1:
+                value:
+                  board_id: board-1
+                  name: 伊藤仁久
+                  content: POST EX
+                  timelimit: 50
+                  attached_files:
+                    - alias: DSCF0377.JPG
+                      download_uri: 'http://172.16.251.1/bbs/files/storage/bbs-attached/111.JPG'
+                      is_headline: true
+                      thumbnail_base64: 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA'
+                    - alias: DSCF0378.JPG
+                      download_uri: 'http://172.16.251.1/bbs/files/storage/bbs-attached/222.JPG'
+                      is_headline: false
+                      thumbnail_base64: 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA'
+        description: |-
+          書き込みの際にリクエストする基本セットは投稿者名と本文です。
+          また、オプションとして投稿がDB共有に載る有効期限も設定することができます（カラの場合、バックエンドの処理にてデフォルト値が設定されます）。
+          保存・DB共有されるentryの情報のうち、基地局IDや位置情報、タイムスタンプなど、バックエンドスクリプトで取得できる情報はリクエストボディには入れられません。
+
+          サムネイル作成、添付ファイルのダウンロードURI、添付ファイルのサイズを得るために、先にfile-broker（別システム）で添付ファイルを処理してからこちらを実行してください。
+      responses:
+        '200':
+          description: NerveNet WEBAPIに依存
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id_record:
+                    type: string
+                    example: 019040c050c10222000a
+        '401':
+          description: Unauthorized
+      tags:
+        - entry
+    parameters: []
+  /entry/search:
+    post:
+      operationId: search-entry
+      summary: メッセージ検索・取得
+      description: |-
+        掲示板のメッセージの検索・取得、更新時刻の新しい方から返却。
+        検索オプションが完全にカラだった場合は「最新から20件取得の1ページ目」で返却されます。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/entry_search_options'
+            examples:
+              example-1:
+                value:
+                  board_id: board-1
+                  date_from: 1673323601
+                  date_to: 2673928401
+                  page: 1
+                  per_page: 20
+              example-2:
+                value:
+                  board_id: board-2
+                  page: 2
+                  per_page: 100
+        description: ''
+      responses:
+        '200':
+          description: NerveNet WEBAPIに依存
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/entry'
+        '401':
+          description: Unauthorized
+      tags:
+        - entry
+    parameters: []
+  /entry/search/attached-files:
+    post:
+      operationId: search-attached-files
+      summary: 掲示板のレコードIDに紐付けられている添付ファイルのレコードIDを検索・取得
+      description: 掲示板のレコードIDに紐付けられている添付ファイルのレコードを検索・取得
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/entry_search_attached_file'
+            examples:
+              example-1:
+                value:
+                  entry_record_ids:
+                    - 019040c050c10222000a
+                    - 019040b5288b022200fb
+                  include_headline: true
+      responses:
+        '200':
+          description: NerveNet WEBAPIに依存
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/attached_file'
+        '401':
+          description: Unauthorized
+      tags:
+        - entry
+    parameters: []
+  /mng/settings:
+    parameters: []
+    get:
+      summary: 掲示板システム全体の設定取得
+      operationId: get-mng
+      parameters:
+        - in: query
+          name: board_id
+          schema:
+            type: string
+          description: Get the maximum number of bulletin boards.
+      responses:
+        '200':
+          description: NerveNet WEBAPIに依存
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  board_id:
+                    type: string
+                    example: board-1
+                  maxcount:
+                    type: integer
+                    example: 5000
+        '401':
+          description: Unauthorized
+      tags:
+        - mng
+      description: |-
+        掲示板システム全体の設定取得
+        V3時点では掲示板ごとの最大投稿保持件数のみ
+    put:
+      summary: 掲示板システム全体の設定変更
+      operationId: put-mng
+      responses:
+        '200':
+          description: NerveNet WEBAPIに依存
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id_record:
+                    type: string
+                    example: 019040c050c10222000a
+        '401':
+          description: Unauthorized
+      description: V3時点では掲示板ごとの最大投稿保持件数のみ
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/settings'
+            examples:
+              Example 1:
+                value:
+                  board_id: board-1
+                  maxcount: 5000
+      tags:
+        - mng
+  /access:
+    parameters: []
+    get:
+      summary: 掲示板アクセスURI・AP情報取得
+      operationId: get-access
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uri:
+                    type: string
+                    format: uri
+                    example: 'http://172.16.1.1/bbs'
+                  ap:
+                    $ref: '#/components/schemas/ap'
+              examples:
+                example-1:
+                  value:
+                    uri: 'http://172.16.1.1/bbs'
+                    ap:
+                      ssid: tsg1-wpa2
+                      type: wpa
+                      key: 1qaz2wsx3edc4rfv
+        '401':
+          description: Unauthorized
+      description: |-
+        掲示板にアクセスするためのURIとAP情報を取得します。
+        このAPIで取得したURIとAP情報から、フロントエンドでQRコードを生成して画面表示します。
+      tags:
+        - access
+tags:
+  - name: access
+  - name: board
+  - name: entry
+  - name: mng

@@ -1,1 +1,0 @@
-yaml置き場。ここにopenapi.yamlを置いてください
